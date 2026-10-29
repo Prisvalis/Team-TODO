@@ -1,0 +1,8 @@
+target
+.git
+.env
+.claude
+docs
+**/.wrangler
+**/node_modules
+src/worker/build

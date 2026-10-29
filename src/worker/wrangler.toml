@@ -1,0 +1,26 @@
+# Worker names must be lowercase (wrangler rejects "Team-TODO"); the D1 keeps the requested name.
+name = "team-todo"
+# PRISVALIS account
+account_id = "5429f9cd947643e8bbde2de5646c737f"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-10-01"
+
+[build]
+# Install once with `cargo install worker-build@^0.8 --locked`; its major.minor must match the worker crate.
+command = "worker-build --release"
+# Routes and logic live in the shared core crate.
+watch_dir = ["src", "../core"]
+
+# Initial values for the first-run setup page; afterwards they live in D1.
+# SETUP_TOKEN is a secret: `npx wrangler secret put SETUP_TOKEN`.
+[vars]
+APP_TIMEZONE = "Asia/Taipei"
+SITE_NAME = "Team"
+COOKIE_SECURE = "true"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "Team-TODO"
+# Create it with `npx wrangler d1 create Team-TODO` and paste the id it prints.
+database_id = "REPLACE-WITH-D1-DATABASE-ID"
+migrations_dir = "../migrations"

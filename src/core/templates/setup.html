@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<div class="narrow-page">
+  <div class="page-head"><h1>初始設定</h1></div>
+  {% if waiting %}
+  <div class="callout warn">網站尚未完成初始設定，請等待管理員完成後再使用。</div>
+  <form method="post" action="/logout"><button class="btn">登出</button></form>
+  {% else %}
+  <div class="callout warn">
+    <strong>歡迎！</strong> 完成以下設定後網站才會開放使用。預設管理員密碼是公開的，請立即設定新密碼；其他已用預設密碼登入的連線會被登出。
+  </div>
+  {% if !errors.is_empty() %}
+  <div class="flash flash-err" role="alert">
+    <strong>請修正以下問題：</strong>
+    <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  <form method="post" action="/setup" class="card form">
+    {% if needs_token %}
+    <label>設定金鑰
+      <input type="password" name="setup_token" autocomplete="off" required>
+      <small>部署設定中的 SETUP_TOKEN</small>
+    </label>
+    {% endif %}
+    <h2>網站</h2>
+    {% call m::site_fields(site, timezones) %}{% endcall %}
+    <h2>管理員</h2>
+    <label>顯示名稱
+      <input name="display_name" value="{{ display_name }}" maxlength="32" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" maxlength="254" autocomplete="email" required>
+    </label>
+    <label>新密碼
+      <input type="password" name="new_password" autocomplete="new-password" minlength="6" required>
+      <small>至少 6 個字元，並包含大寫英文、小寫英文、數字、符號（如 !@#$）中的至少兩種</small>
+    </label>
+    <label>再次輸入新密碼
+      <input type="password" name="new_password_confirm" autocomplete="new-password" minlength="6" required>
+    </label>
+    <button class="btn primary">完成設定</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

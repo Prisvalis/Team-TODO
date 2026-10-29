@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1 class="auth-title">註冊帳號</h1>
+  {% if !error.is_empty() %}<div class="flash flash-err" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/signup" class="form">
+    <label>帳號
+      <input name="username" value="{{ username }}" autocomplete="username" autocapitalize="none" minlength="3" maxlength="32" pattern="[A-Za-z0-9._\-]+" required autofocus>
+      <small>3～32 個字元，可用英文字母、數字與 . _ -，不分大小寫</small>
+    </label>
+    <label>顯示名稱
+      <input name="display_name" value="{{ display_name }}" maxlength="32" required>
+    </label>
+    <label>密碼
+      <input type="password" name="password" autocomplete="new-password" minlength="6" required>
+      <small>至少 6 個字元，並包含大寫英文、小寫英文、數字、符號（如 !@#$）中的至少兩種</small>
+    </label>
+    <label>再次輸入密碼
+      <input type="password" name="password_confirm" autocomplete="new-password" minlength="6" required>
+    </label>
+    <button class="btn primary block">註冊並登入</button>
+  </form>
+  <p class="muted center">已經有帳號？<a href="/login">登入</a></p>
+</div>
+{% endblock %}

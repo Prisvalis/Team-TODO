@@ -1,0 +1,50 @@
+
+{% macro issue_list(rows, empty, back) %}
+{% if rows.is_empty() %}
+<p class="empty">{{ empty }}</p>
+{% else %}
+<ul class="issue-list">
+  {% for r in rows %}
+  <li class="issue-item">
+    <span class="status-dot s-{{ r.status }}" title="{{ r.status_label }}"></span>
+    <div class="issue-main">
+      <a class="issue-title{% if r.status == "done" %} done{% endif %}" href="/issues/{{ r.id }}">{{ r.title }}</a>
+      <div class="issue-meta">
+        {% for l in r.labels %}<span class="chip" style="--c: {{ l.color }}">{{ l.name }}</span>{% endfor %}
+        <span class="badge s-{{ r.status }}">{{ r.status_label }}</span>
+        {% if r.in_series %}<span class="badge series-badge" title="週期活動的其中一場">🔁 {% if r.start.is_empty() %}週期{% else %}{{ r.start }}{% endif %}</span>{% endif %}
+        {% if !r.is_public %}<span class="badge muted-badge" title="只有開立者與負責人看得到">私人</span>{% endif %}
+        <span>負責：{% if r.assignee.is_empty() %}<em class="unassigned">未指派</em>{% else %}{{ r.assignee }}{% endif %}</span>
+        <span class="muted">開立：{{ r.issuer }}</span>
+      </div>
+    </div>
+    <div class="issue-side">
+      {% if !r.due.is_empty() %}<div class="due {{ r.due_class }}" title="到期：{{ r.due }}"{% if r.status != "done" && r.due_ms != 0 %} data-due="{{ r.due_ms }}"{% endif %}>{{ r.due_label }}</div>{% endif %}
+      {% if r.can_claim %}
+      <form method="post" action="/issues/{{ r.id }}/claim">
+        <input type="hidden" name="next" value="{{ back }}">
+        <button class="btn tiny primary">由我負責</button>
+      </form>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endmacro %}
+
+{% macro site_fields(site, timezones) %}
+<label>品牌名稱
+  <input name="site_name" value="{{ site.site_name }}" maxlength="32" required>
+  <small>顯示在「TODO」前面，例如「{{ site.site_name }} TODO」</small>
+</label>
+<label>網站網址
+  <input type="url" name="site_url" value="{{ site.site_url }}" maxlength="200" placeholder="https://todo.example.com">
+  <small>使用者連線的網址（只填到網域與 port）。以 https:// 開頭時，登入 Cookie 會自動加上 Secure。</small>
+</label>
+<label>時區
+  <select name="timezone">{% for o in timezones %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <small>網站顯示與輸入時間所用的時區</small>
+</label>
+<label class="check"><input type="checkbox" name="allow_signup" value="1"{% if site.allow_signup %} checked{% endif %}> 開放自行註冊</label>
+{% endmacro %}

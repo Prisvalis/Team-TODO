@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="crumb"><a href="/issues">← 工作清單</a></p>
+<div class="page-head issue-head">
+  <div>
+    <h1 class="issue-heading">{{ row.title }}</h1>
+    <div class="issue-meta">
+      <span class="badge s-{{ row.status }}">{{ row.status_label }}</span>
+      <span class="badge muted-badge">{{ visibility_label }}</span>
+      {% if !series_id.is_empty() %}<a class="badge series-badge" href="/series/{{ series_id }}" title="查看整個週期活動">🔁 週期活動</a>{% endif %}
+      {% for l in row.labels %}<span class="chip" style="--c: {{ l.color }}">{{ l.name }}</span>{% endfor %}
+    </div>
+  </div>
+  {% if can_manage || can_delete %}
+  <div class="head-actions">
+    {% if can_manage %}<a class="btn" href="/issues/{{ row.id }}/edit">編輯</a>{% endif %}
+    {% if can_delete %}
+    <form method="post" action="/issues/{{ row.id }}/delete" data-confirm="確定要刪除這項工作嗎？刪除後無法復原。{% if !can_manage %}（你以管理員身分刪除他人開立的工作）{% endif %}">
+      <button class="btn danger">刪除</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+<div class="grid-main">
+  <section class="card">
+    <h2>備註</h2>
+    {% if body.is_empty() %}<p class="empty">沒有備註。</p>{% else %}<div class="body-text">{{ body }}</div>{% endif %}
+  </section>
+  <div class="stack">
+    {% if can_status %}
+    <section class="card">
+      <h2>狀態</h2>
+      <div class="segmented">
+        {% for o in statuses %}
+        <form method="post" action="/issues/{{ row.id }}/status">
+          <input type="hidden" name="status" value="{{ o.value }}">
+          <button class="seg{% if o.selected %} active{% endif %}"{% if o.selected %} disabled aria-pressed="true"{% endif %}>{{ o.label }}</button>
+        </form>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    <section class="card">
+      <h2>資訊</h2>
+      <dl class="details">
+        <dt>負責人</dt>
+        <dd>
+          {% if row.assignee.is_empty() %}<em class="unassigned">未指派</em>{% else %}{{ row.assignee }}{% endif %}
+          {% if can_claim %}
+          <form method="post" action="/issues/{{ row.id }}/claim" class="inline"><button class="btn tiny primary">由我負責</button></form>
+          {% endif %}
+          {% if can_release %}
+          <form method="post" action="/issues/{{ row.id }}/release" class="inline" data-confirm="確定不再負責這項工作？{% if release_hides %}這是私人工作，放棄後你將看不到它。{% endif %}"><button class="btn tiny">放棄指派</button></form>
+          {% endif %}
+        </dd>
+        <dt>開立者</dt><dd>{{ row.issuer }}</dd>
+        <dt>開始時間</dt><dd>{% if start.is_empty() %}<span class="muted">未設定</span>{% else %}{{ start }}{% endif %}</dd>
+        <dt>到期時間</dt><dd>{% if row.due.is_empty() %}<span class="muted">未設定</span>{% else %}{{ row.due }} <span class="due {{ row.due_class }}"{% if row.status != "done" && row.due_ms != 0 %} data-due="{{ row.due_ms }}"{% endif %}>{{ row.due_label }}</span>{% endif %}</dd>
+        <dt>建立時間</dt><dd>{{ created }}</dd>
+        <dt>最後更新</dt><dd>{{ row.updated }}</dd>
+      </dl>
+    </section>
+    <section class="card">
+      <h2>我的提醒</h2>
+      {% if row.status == "done" %}
+      <p class="muted small">這項工作已完成，不會再發出提醒。</p>
+      {% else %}
+      {% if !reminder.fire_text.is_empty() %}
+      {% if reminder.notified %}
+      <p class="small">已於 {{ reminder.fire_text }}（<span data-rel="{{ reminder.fire_ms }}">{{ reminder.fire_rel }}</span>）提醒過。</p>
+      {% else %}
+      <p class="small"{% if reminder.past %} hidden{% endif %} data-until="{{ reminder.fire_ms }}">將於 <strong>{{ reminder.fire_text }}（<span data-rel="{{ reminder.fire_ms }}">{{ reminder.fire_rel }}</span>）</strong> 提醒你。</p>
+      <p class="small"{% if !reminder.past %} hidden{% endif %} data-from="{{ reminder.fire_ms }}">提醒時間 {{ reminder.fire_text }} 已到，開著網站時會通知你。</p>
+      {% endif %}
+      {% endif %}
+      <form method="post" action="/issues/{{ row.id }}/reminder" class="form reminder" data-switch>
+        <select name="remind_mode" data-switch-mode aria-label="提醒方式">
+          <option value="none"{% if reminder.mode == "none" %} selected{% endif %}>不提醒</option>
+          <option value="before_start"{% if reminder.mode == "before_start" %} selected{% endif %}{% if !has_start %} disabled{% endif %}>開始前{% if !has_start %}（需先設定開始時間）{% endif %}</option>
+          <option value="before_due"{% if reminder.mode == "before_due" %} selected{% endif %}{% if !has_due %} disabled{% endif %}>到期前{% if !has_due %}（需先設定到期時間）{% endif %}</option>
+          <option value="exact"{% if reminder.mode == "exact" %} selected{% endif %}>指定時間</option>
+        </select>
+        <select name="remind_offset" data-show-for="before_start before_due" aria-label="提前多久">{% for o in offsets %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+        <input type="datetime-local" name="remind_at" value="{{ reminder.at }}" data-show-for="exact" aria-label="提醒時間">
+        <button class="btn">儲存提醒</button>
+      </form>
+      <p class="muted small">提醒只通知你自己；請保持網站分頁開啟並啟用瀏覽器通知。</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

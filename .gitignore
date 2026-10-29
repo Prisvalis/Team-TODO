@@ -1,0 +1,6 @@
+/target
+/src/worker/build
+.wrangler/
+node_modules/
+.env
+docs/LOCAL/

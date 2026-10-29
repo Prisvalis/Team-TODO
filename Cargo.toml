@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["src/core", "src/docker", "src/worker"]
+# todo-worker only builds for wasm32, so plain `cargo build/test` skips it.
+default-members = ["src/core", "src/docker"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.94"
+
+[workspace.dependencies]
+todo-core = { path = "src/core" }
+axum = { version = "0.8", default-features = false, features = ["form", "query", "json"] }
+serde_json = "1"

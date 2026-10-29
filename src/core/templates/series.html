@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<p class="crumb"><a href="/issues">← 工作清單</a></p>
+<div class="page-head issue-head">
+  <div>
+    <h1 class="issue-heading">{{ layout.title }}</h1>
+    <div class="issue-meta">
+      <span class="badge series-badge">🔁 週期活動</span>
+      {% if stopped %}<span class="badge muted-badge">已停止</span>{% endif %}
+      <span class="badge muted-badge">{{ visibility_label }}</span>
+      {% for l in labels %}<span class="chip" style="--c: {{ l.color }}">{{ l.name }}</span>{% endfor %}
+    </div>
+  </div>
+  {% if can_manage && !stopped %}
+  <div class="head-actions">
+    <a class="btn" href="/series/{{ id }}/edit">編輯系列</a>
+    <form method="post" action="/series/{{ id }}/stop" data-confirm="確定要停止重複嗎？尚未開始且仍為待處理的場次會被移除，已發生或已有人處理的場次會保留。停止後無法恢復。">
+      <button class="btn danger">停止重複</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+<div class="grid-main">
+  <div class="stack">
+    <section class="card">
+      <h2>即將到來的場次</h2>
+      {% call m::issue_list(upcoming, "目前沒有即將到來的場次。", back) %}{% endcall %}
+    </section>
+    {% if !past.is_empty() %}
+    <section class="card">
+      <h2>最近的場次</h2>
+      {% call m::issue_list(past, "", back) %}{% endcall %}
+    </section>
+    {% endif %}
+    <section class="card">
+      <h2>備註</h2>
+      {% if body.is_empty() %}<p class="empty">沒有備註。</p>{% else %}<div class="body-text">{{ body }}</div>{% endif %}
+    </section>
+  </div>
+  <div class="stack">
+    <section class="card">
+      <h2>重複規則</h2>
+      <dl class="details">
+        <dt>時間</dt><dd><strong>{{ rule }}</strong></dd>
+        <dt>期間</dt><dd>{{ period }}</dd>
+        <dt>負責人</dt><dd>{% if assignee.is_empty() %}<em class="unassigned">未指派</em>{% else %}{{ assignee }}{% endif %}</dd>
+        <dt>開立者</dt><dd>{{ issuer }}</dd>
+      </dl>
+      <p class="muted small">每場都是一項獨立的工作，可以各自標示完成、改負責人或寫備註；系統會預先建立未來 14 天內的場次。</p>
+    </section>
+    {% if !stopped %}
+    <section class="card">
+      <h2>我的提醒</h2>
+      <form method="post" action="/series/{{ id }}/reminder" class="form reminder" data-switch>
+        <select name="remind_mode" data-switch-mode aria-label="提醒方式">
+          <option value="none"{% if reminder_mode == "none" %} selected{% endif %}>不提醒</option>
+          <option value="before_start"{% if reminder_mode == "before_start" %} selected{% endif %}>每場開始前</option>
+          <option value="before_due"{% if reminder_mode == "before_due" %} selected{% endif %}>每場結束前</option>
+        </select>
+        <select name="remind_offset" data-show-for="before_start before_due" aria-label="提前多久">{% for o in offsets %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+        <button class="btn">儲存提醒</button>
+      </form>
+      <p class="muted small">套用到每一場尚未開始的活動，只通知你自己；會取代你在這些場次上個別設定的提醒。</p>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

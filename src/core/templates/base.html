@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ layout.title }} · {{ layout.brand }} TODO</title>
+  <link rel="stylesheet" href="/static/app.css?v={{ layout.asset_version }}">
+  <script src="/static/app.js?v={{ layout.asset_version }}" defer></script>
+</head>
+<body data-now="{{ layout.now_ms }}"{% if layout.signed_in && !layout.restricted %} data-poll="1"{% endif %}>
+{% if layout.signed_in %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/">{{ layout.brand }} <span>TODO</span></a>
+    {% if !layout.restricted %}
+    <nav class="nav" aria-label="主選單">
+      <a href="/"{% if layout.nav == "dashboard" %} class="active" aria-current="page"{% endif %}>儀表板</a>
+      <a href="/issues"{% if layout.nav == "issues" %} class="active" aria-current="page"{% endif %}>工作清單</a>
+      <a href="/board"{% if layout.nav == "board" %} class="active" aria-current="page"{% endif %}>看板</a>
+      <a href="/team"{% if layout.nav == "team" %} class="active" aria-current="page"{% endif %}>團隊負載</a>
+      <a href="/labels"{% if layout.nav == "labels" %} class="active" aria-current="page"{% endif %}>標籤</a>
+      {% if layout.is_admin %}<a href="/admin"{% if layout.nav == "admin" %} class="active" aria-current="page"{% endif %}>管理</a>{% endif %}
+    </nav>
+    {% endif %}
+    <div class="user-menu">
+      {% if !layout.restricted %}
+      <a class="btn primary small" href="/issues/new">＋ 新增工作</a>
+      <button type="button" class="btn ghost small" id="notify-btn" hidden></button>
+      {% endif %}
+      <a class="user-name{% if layout.nav == "account" %} active{% endif %}" href="/password" title="帳號設定">{{ layout.user_name }}</a>
+      <form method="post" action="/logout"><button class="btn ghost small">登出</button></form>
+    </div>
+  </div>
+</header>
+{% endif %}
+<main class="container{% if !layout.signed_in %} narrow{% endif %}">
+  {% if let Some(flash) = layout.flash %}
+  <div class="flash flash-{{ flash.kind }}" role="status">{{ flash.text }}</div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

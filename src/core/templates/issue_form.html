@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>{{ layout.title }}</h1></div>
+{% if !errors.is_empty() %}
+<div class="flash flash-err" role="alert">
+  <strong>請修正以下問題：</strong>
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if in_series %}
+<div class="callout info" role="note">這是週期活動的其中一場，這裡的修改只影響這一場。要修改之後每一場，請到週期活動頁面編輯整個系列。</div>
+{% endif %}
+{% if form.conflict %}
+<div class="callout warn" role="alert">
+  <strong>這項工作在你編輯時已被其他人更新。</strong> 已套用最新的狀態與負責人，你輸入的其他內容都保留著；請確認後再按一次「儲存變更」。
+</div>
+{% endif %}
+<form method="post" action="{{ action }}" class="issue-form">
+  <input type="hidden" name="version" value="{{ form.version }}">
+  {% if !form.tz.is_empty() %}<input type="hidden" name="tz" value="{{ form.tz }}">{% endif %}
+  <div class="card form">
+    <label>標題
+      <input name="title" value="{{ form.title }}" maxlength="200" required autofocus placeholder="要完成什麼事？">
+    </label>
+    <label>備註
+      <textarea name="body" rows="10" maxlength="10000" placeholder="背景、驗收條件、相關連結…">{{ form.body }}</textarea>
+    </label>
+    <fieldset class="labels-field">
+      <legend>標籤 <a class="small" href="/labels" target="_blank" rel="noopener">管理標籤</a></legend>
+      <div class="chip-options">
+        {% for l in labels %}
+        <label class="chip-option"><input type="checkbox" name="labels" value="{{ l.id }}" aria-label="標籤：{{ l.name }}"{% if l.checked %} checked{% endif %}><span class="chip" style="--c: {{ l.color }}">{{ l.name }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+  </div>
+  <div class="card form side">
+    {% if is_edit && !is_series %}
+    <label>狀態
+      <select name="status">{% for o in statuses %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+    </label>
+    {% else %}
+    <input type="hidden" name="status" value="open">
+    {% endif %}
+    <label>負責人
+      <select name="assignee_id">{% for o in assignees %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+    </label>
+    <fieldset>
+      <legend>誰看得到</legend>
+      <label class="radio-card"><input type="radio" name="visibility" value="private" aria-label="私人：只有你與負責人"{% if form.visibility != "public" %} checked{% endif %}>
+        <span><strong>私人</strong><small>只有你與負責人</small></span></label>
+      <label class="radio-card"><input type="radio" name="visibility" value="public" aria-label="公開：所有成員；未指派時可被認領"{% if form.visibility == "public" %} checked{% endif %}>
+        <span><strong>公開</strong><small>所有成員；未指派時可被認領</small></span></label>
+    </fieldset>
+    <label>開始時間<input type="datetime-local" name="start_at" value="{{ form.start_at }}"></label>
+    <label>到期時間<input type="datetime-local" name="due_at" value="{{ form.due_at }}"></label>
+    {% if !is_edit || is_series %}
+    <fieldset class="repeat" data-switch>
+      <legend>重複</legend>
+      <select name="repeat" data-switch-mode aria-label="重複方式">
+        {% if !is_series %}<option value="none"{% if form.repeat == "none" %} selected{% endif %}>不重複</option>{% endif %}
+        {% for o in freqs %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+      </select>
+      <div class="chip-options" data-show-for="weekly" role="group" aria-label="每週的哪幾天">
+        {% for d in weekday_opts %}
+        <label class="chip-option"><input type="checkbox" name="weekdays" value="{{ d.value }}" aria-label="星期{{ d.label }}"{% if d.selected %} checked{% endif %}><span class="chip" style="--c: #4f46e5">週{{ d.label }}</span></label>
+        {% endfor %}
+      </div>
+      <label data-show-for="daily weekly monthly">結束日期（選填）<input type="date" name="until" value="{{ form.until }}"></label>
+      <small class="muted" data-show-for="daily weekly monthly">「開始時間」是第一場，「開始～到期」是每場的時段；每月重複時固定在第一場的日期。系統會預先建立未來 14 天內的場次，每場都是一項獨立的工作。{% if is_series %}儲存後，尚未開始且仍為待處理的場次會依新設定重建。{% endif %}</small>
+    </fieldset>
+    {% endif %}
+    {% if !is_edit %}
+    <fieldset class="reminder" data-switch>
+      <legend>我的提醒</legend>
+      <select name="remind_mode" data-switch-mode aria-label="提醒方式">
+        <option value="none"{% if form.remind_mode == "none" %} selected{% endif %}>不提醒</option>
+        <option value="before_start"{% if form.remind_mode == "before_start" %} selected{% endif %}>開始前</option>
+        <option value="before_due"{% if form.remind_mode == "before_due" %} selected{% endif %}>到期前</option>
+        <option value="exact"{% if form.remind_mode == "exact" %} selected{% endif %}>指定時間</option>
+      </select>
+      <select name="remind_offset" data-show-for="before_start before_due" aria-label="提前多久">{% for o in offsets %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+      <input type="datetime-local" name="remind_at" value="{{ form.remind_at }}" data-show-for="exact" aria-label="提醒時間">
+    </fieldset>
+    {% endif %}
+    <div class="form-actions">
+      <button class="btn primary">{% if is_series %}儲存系列{% else if is_edit %}儲存變更{% else %}建立工作{% endif %}</button>
+      <a class="btn ghost" href="{{ cancel }}">取消</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

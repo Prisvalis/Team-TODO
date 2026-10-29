@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1 class="auth-title">{{ layout.brand }} <span>TODO</span></h1>
+  <p class="muted center">登入以查看與分配團隊工作</p>
+  {% if setup_pending %}
+  <div class="callout warn">網站尚未完成初始設定。請以預設管理員帳號登入，完成設定後才能開始使用。</div>
+  {% endif %}
+  {% if !error.is_empty() %}<div class="flash flash-err" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/login" class="form">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label>帳號
+      <input name="username" value="{{ username }}" autocomplete="username" autocapitalize="none" required autofocus>
+    </label>
+    <label>密碼
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn primary block">登入</button>
+  </form>
+  {% if allow_signup %}<p class="muted center">還沒有帳號？<a href="/signup">自行註冊</a></p>{% endif %}
+</div>
+{% endblock %}

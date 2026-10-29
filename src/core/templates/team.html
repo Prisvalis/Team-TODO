@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <h1>團隊負載</h1>
+  <a class="btn" href="/issues?scope=public&assignee=none">可認領的工作（{{ claimable }}）</a>
+</div>
+<p class="muted">
+  依「逾期數量、進行中工作量」排序，協助判斷誰還有餘裕。
+  {% if counts_all %}管理員看到的是全部工作的數量。{% else %}只計算你看得到的工作（公開，或與你有關的私人工作）。{% endif %}系統管理員不列入成員。
+</p>
+<section class="card table-card">
+  <table class="table">
+    <thead>
+      <tr><th>成員</th><th class="w-bar">負載</th><th class="num">待處理</th><th class="num">進行中</th><th class="num">已逾期</th><th class="num">7 天內到期</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td><strong>{{ r.name }}</strong></td>
+        <td class="w-bar">
+          <div class="bar" title="待處理 {{ r.open }}、進行中 {{ r.in_progress }}">
+            <span class="bar-progress" style="width: {{ r.progress_pct }}%"></span><span class="bar-open" style="width: {{ r.open_pct }}%"></span>
+          </div>
+        </td>
+        <td class="num">{{ r.open }}</td>
+        <td class="num">{{ r.in_progress }}</td>
+        <td class="num{% if r.overdue > 0 %} danger-text{% endif %}">{{ r.overdue }}</td>
+        <td class="num{% if r.due_week > 0 %} warn-text{% endif %}">{{ r.due_week }}</td>
+        <td class="actions">
+          <a href="/issues?scope=all&assignee={{ r.user_id }}">查看工作</a>
+          <a class="btn tiny" href="/issues/new?assignee={{ r.user_id }}">指派工作</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="legend"><span class="bar-progress dot"></span>進行中 <span class="bar-open dot"></span>待處理</p>
+</section>
+{% endblock %}

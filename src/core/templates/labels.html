@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>標籤</h1></div>
+<div class="grid-main">
+  <section class="card">
+    <h2>所有標籤</h2>
+    <ul class="label-list">
+      {% for l in labels %}
+      <li>
+        <a class="chip" style="--c: {{ l.color }}" href="/issues?scope=all&label={{ l.id }}&status=any" title="查看使用此標籤的工作">{{ l.name }}</a>
+        {% if l.is_system %}<span class="muted small">系統預設</span>{% endif %}
+        {% if l.can_delete %}
+        <form method="post" action="/labels/{{ l.id }}/delete" class="inline" data-confirm="刪除標籤「{{ l.name }}」？已套用的工作會移除這個標籤。">
+          <button class="btn tiny ghost" aria-label="刪除標籤 {{ l.name }}">刪除</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>新增標籤</h2>
+    <form method="post" action="/labels" class="form">
+      <label>名稱<input name="name" maxlength="32" required placeholder="例如：客戶回報"></label>
+      <label>顏色<input type="color" name="color" value="#4f46e5"></label>
+      <button class="btn primary">新增</button>
+    </form>
+    <p class="muted small">所有成員都能使用標籤。自訂標籤可由建立者或管理員刪除；系統標籤僅管理員可刪除。</p>
+  </section>
+</div>
+{% endblock %}

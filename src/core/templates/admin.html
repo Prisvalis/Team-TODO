@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<div class="page-head"><h1>管理後台</h1></div>
+<section class="card table-card">
+  <h2>使用者</h2>
+  <table class="table">
+    <thead><tr><th>顯示名稱</th><th>帳號</th><th>Email</th><th>角色</th><th>狀態</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr{% if !u.is_active %} class="inactive"{% endif %}>
+        <td>{{ u.display_name }}{% if u.is_self %} <span class="muted small">（你）</span>{% endif %}</td>
+        <td>{{ u.username }}</td>
+        <td>{% if u.email.is_empty() %}<span class="muted">—</span>{% else %}{{ u.email }}{% endif %}</td>
+        <td>{% if u.is_admin %}<span class="badge">管理員</span>{% else %}成員{% endif %}</td>
+        <td>{% if !u.is_active %}<span class="badge muted-badge">已停用</span>{% else if u.must_change_password %}<span class="badge warn-badge">待改密碼</span>{% else %}正常{% endif %}</td>
+        <td class="actions">
+          {% if !u.is_self %}
+          <form method="post" action="/admin/users/{{ u.id }}/reset" class="inline reset-form">
+            <input type="text" name="password" minlength="6" required placeholder="新臨時密碼" aria-label="{{ u.username }} 的新臨時密碼" autocomplete="off">
+            <button class="btn tiny">重設密碼</button>
+          </form>
+          <form method="post" action="/admin/users/{{ u.id }}/admin" class="inline"><input type="hidden" name="value" value="{% if u.is_admin %}0{% else %}1{% endif %}"><button class="btn tiny ghost">{% if u.is_admin %}取消管理員{% else %}設為管理員{% endif %}</button></form>
+          <form method="post" action="/admin/users/{{ u.id }}/active" class="inline"{% if u.is_active %} data-confirm="停用「{{ u.username }}」？該帳號會立即登出且無法登入，指派給他的未完成工作會改為未指派。"{% endif %}><input type="hidden" name="value" value="{% if u.is_active %}0{% else %}1{% endif %}"><button class="btn tiny {% if u.is_active %}danger{% else %}ghost{% endif %}">{% if u.is_active %}停用{% else %}啟用{% endif %}</button></form>
+          {% else %}
+          <a href="/password">修改我的密碼</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<div class="grid-2">
+  <section class="card">
+    <h2>新增使用者</h2>
+    <form method="post" action="/admin/users" class="form">
+      <label>帳號<input name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9._\-]+" autocapitalize="none" required></label>
+      <label>顯示名稱<input name="display_name" maxlength="32" required></label>
+      <label>Email（選填）<input type="email" name="email" maxlength="254" autocomplete="off"><small>供日後的通知功能使用；使用者也可在個人資料中自行修改</small></label>
+      <label>臨時密碼
+        <input type="text" name="password" minlength="6" required autocomplete="off">
+        <small>使用者首次登入時必須修改；至少 6 個字元，並包含大寫、小寫、數字、符號（如 !@#$）中的至少兩種</small>
+      </label>
+      <label class="check"><input type="checkbox" name="is_admin" value="1"> 設為管理員</label>
+      <button class="btn primary">新增</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>網站設定</h2>
+    <form method="post" action="/admin/settings" class="form">
+      {% call m::site_fields(site, timezones) %}{% endcall %}
+      <small class="muted">開放註冊後，登入頁會顯示「自行註冊」連結。外部身分登入（AD / Keycloak）尚未提供。</small>
+      <button class="btn">儲存設定</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

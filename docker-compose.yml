@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: src/docker/Dockerfile
+    container_name: ${APP_CONTAINER_NAME:-team-todo-app}
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Taipei}
+      APP_TIMEZONE: ${TZ:-Asia/Taipei}
+      SITE_NAME: ${SITE_NAME:-Team}
+      SITE_URL: ${SITE_URL:-}
+      SETUP_TOKEN: ${SETUP_TOKEN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      DB_HOST: mariadb
+      DB_NAME: ${MARIADB_DATABASE:-todo}
+      DB_USER: ${MARIADB_USER:-todo}
+      DB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD in .env}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:12.3
+    container_name: ${DB_CONTAINER_NAME:-team-todo-db}
+    restart: unless-stopped
+    # Byte-exact comparisons, matching SQLite/D1 (the default collation ignores case and accents).
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_nopad_bin"]
+    environment:
+      TZ: ${TZ:-Asia/Taipei}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-todo}
+      MARIADB_USER: ${MARIADB_USER:-todo}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?set MARIADB_ROOT_PASSWORD in .env}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 60s
+      interval: 5s
+      retries: 10
+
+volumes:
+  mariadb-data:

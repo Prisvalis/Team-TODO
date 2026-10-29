@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<div class="page-head"><h1>工作清單</h1></div>
+<nav class="tabs" aria-label="範圍">
+  {% for t in tabs %}<a href="{{ t.href }}"{% if t.active %} class="active" aria-current="page"{% endif %}>{{ t.label }}</a>{% endfor %}
+</nav>
+<form method="get" action="/issues" class="filters">
+  <input type="hidden" name="scope" value="{{ scope }}">
+  <input type="search" name="q" value="{{ q }}" maxlength="100" placeholder="搜尋標題或備註" aria-label="搜尋">
+  <select name="status" aria-label="狀態">{% for o in statuses %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="due" aria-label="到期時間">{% for o in dues %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="label" aria-label="標籤">{% for o in labels %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="assignee" aria-label="負責人">{% for o in assignees %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="sort" aria-label="排序">{% for o in sorts %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <button class="btn">篩選</button>
+  {% if filtered %}<a class="btn ghost" href="/issues?scope={{ scope }}">清除條件</a>{% endif %}
+</form>
+<section class="card">
+  <p class="muted small">共 {{ rows.len() }} 項{% if rows.len() >= 200 %}（只顯示前 200 項，請縮小範圍）{% endif %}</p>
+  {% call m::issue_list(rows, "沒有符合條件的工作。", back) %}{% endcall %}
+</section>
+{% endblock %}

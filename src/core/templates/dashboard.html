@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<div class="page-head"><h1>嗨，{{ layout.user_name }}</h1></div>
+<div class="stats">
+  {% for c in cards %}
+  <a class="stat {{ c.tone }}" href="{{ c.href }}">
+    <span class="stat-value">{{ c.value }}</span>
+    <span class="stat-label">{{ c.label }}</span>
+  </a>
+  {% endfor %}
+</div>
+<div class="grid-main">
+  <section class="card">
+    <div class="card-head"><h2>我的工作</h2><a href="/issues?scope=assigned">查看全部</a></div>
+    <p class="muted small">指派給我、尚未完成，依到期時間排序</p>
+    {% call m::issue_list(mine, "目前沒有指派給你的工作。可以到「工作清單 › 公開」認領工作。", back) %}{% endcall %}
+  </section>
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>即將提醒</h2></div>
+      {% if reminders.is_empty() %}
+      <p class="empty">尚未設定提醒。在工作頁面的「我的提醒」可設定。</p>
+      {% else %}
+      <ul class="simple-list">
+        {% for r in reminders %}
+        <li data-reminder-item="{{ r.issue_id }}"><a href="/issues/{{ r.issue_id }}">{{ r.title }}</a><span class="muted small">{{ r.at }}（<span data-rel="{{ r.at_ms }}">{{ r.rel }}</span>）</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>我開立、未完成</h2><a href="/issues?scope=created">查看全部</a></div>
+      {% call m::issue_list(created, "沒有尚未完成的工作。", back) %}{% endcall %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>看板</h1></div>
+<form method="get" action="/board" class="filters">
+  <select name="scope" aria-label="範圍">{% for o in scopes %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="label" aria-label="標籤">{% for o in labels %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <select name="assignee" aria-label="負責人">{% for o in assignees %}<option value="{{ o.value }}"{% if o.selected %} selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+  <button class="btn">篩選</button>
+</form>
+<div class="board">
+  {% for col in columns %}
+  <section class="column col-{{ col.status }}">
+    <h2>{{ col.label }} <span class="count">{{ col.rows.len() }}{% if col.more %}+{% endif %}</span></h2>
+    {% if col.rows.is_empty() %}<p class="empty">沒有工作</p>{% endif %}
+    {% for r in col.rows %}
+    <article class="board-card">
+      <a class="issue-title{% if r.status == "done" %} done{% endif %}" href="/issues/{{ r.id }}">{{ r.title }}</a>
+      <div class="issue-meta">
+        {% for l in r.labels %}<span class="chip" style="--c: {{ l.color }}">{{ l.name }}</span>{% endfor %}
+      </div>
+      <div class="board-card-foot">
+        <span>{% if r.assignee.is_empty() %}<em class="unassigned">未指派</em>{% else %}{{ r.assignee }}{% endif %}</span>
+        {% if !r.due.is_empty() %}<span class="due {{ r.due_class }}" title="到期：{{ r.due }}"{% if r.status != "done" && r.due_ms != 0 %} data-due="{{ r.due_ms }}"{% endif %}>{{ r.due_label }}</span>{% endif %}
+      </div>
+      {% if r.can_claim %}
+      <form method="post" action="/issues/{{ r.id }}/claim">
+        <input type="hidden" name="next" value="{{ back }}">
+        <button class="btn tiny primary">由我負責</button>
+      </form>
+      {% endif %}
+      {% if r.can_move %}
+      <div class="moves">
+        {% for mv in col.moves %}
+        <form method="post" action="/issues/{{ r.id }}/status">
+          <input type="hidden" name="status" value="{{ mv.0 }}">
+          <input type="hidden" name="next" value="{{ back }}">
+          <button class="btn tiny" title="改為{{ mv.1 }}">→ {{ mv.1 }}</button>
+        </form>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+    {% if col.more %}<p class="muted small center">只顯示前 {{ col.rows.len() }} 項，<a href="{{ col.list_href }}">在清單中查看全部</a></p>{% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

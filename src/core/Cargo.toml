@@ -1,0 +1,19 @@
+[package]
+name = "todo-core"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+axum.workspace = true
+serde_json.workspace = true
+askama = "0.16"
+argon2 = { version = "0.6", default-features = false, features = ["alloc", "password-hash"] }
+chrono = { version = "0.4", default-features = false, features = ["alloc"] }
+chrono-tz = "0.10"
+form_urlencoded = "1"
+sha2 = "0.11"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+tower = { version = "0.5", features = ["util"] }
